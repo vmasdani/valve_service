@@ -19,7 +19,7 @@ app.use(bodyParser.json());
 const port = 80;
 
 // mqtt connection
-const host = 'mqtt://192.168.100.202';
+const host = 'mqtt://127.0.0.1';
 const mqtt = require('mqtt');
 const client = mqtt.connect(host);
 
