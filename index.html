@@ -188,10 +188,5 @@
       xhttp.send(JSON.stringify(data));
     }
 
-    function sendOff() {
-      message = new Paho.MQTT.Message('0');
-      message.destinationName = 'testtopic';
-      client.send(message);
-    }
   </script>
 </html>
