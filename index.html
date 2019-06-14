@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>C5/14 Watering System</title>
+    <meta name="viewport" content="width=device-width intial-scale=1">
+    <link rel="stylesheet" href="css/skeleton.css">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/custom.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href='//fonts.googleapis.com/css?family=Raleway:400,300,600' rel='stylesheet' type='text/css'> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script> 
+  </head>
+  <body class="fullwh">
+    <div class="flexi">
+      <h1>C5/14 Watering System</h1>
+      <h5>Scheduling</h5>
+      <ul>
+        <li>10.00</li>
+        <li>15.00</li>
+      </ul>
+      <button class="button-primary"><i class="fa fa-plus"></i> Add schedule</button>
+      <h5 style="margin-top:15px">Watering Time</h5>
+      <div>
+        <input style="width:40px" type="text" value="0"></input> Minutes
+        <input style="width:40px" type="text" value="20"></input> Seconds
+        <button class="button-primary"><i class="fa fa-check"></i></button>
+      </div>
+      <h5 style="margin-top:15px">Manual Control</h5>
+      <div>
+        <button class="button-primary" onclick="sendOn()">ON</button>
+        <button class="button" onclick="sendOff()">OFF</button>
+      </div>
+    </div>
+  </body>
+
+  <!-- Main MQTT script -->
+  <script>
+    const hostname = 'broker.hivemq.com';
+    const port = '8000';
+    const clientId = 'jsws-id01';
+
+    client = new Paho.MQTT.Client(hostname, Number(port), clientId);
+
+    client.onConnectionLost = onConnectionLost;
+    client.onMessageArrived = onMessageArrived;
+  
+    client.connect({
+      onSuccess: onConnect,
+    });
+
+    function onConnect() {
+      console.log('onConnect');
+      client.subscribe('testtopic');
+      message = new Paho.MQTT.Message('hello yo!');
+      message.destinationName = 'testtopic';
+      client.send(message);
+    }
+
+    function onConnectionLost(responseObject) {
+      if(responseObject.errorCode !== 0) {
+        console.log('onConnectionLost: ' + responseObject.errorMessage);
+      }
+    }
+
+    function onMessageArrived(message) {
+      console.log('onMessageArrived: ' + message.payloadString);
+    }
+
+    function sendOn() {
+      message = new Paho.MQTT.Message('1');
+      message.destinationName = 'testtopic';
+      client.send(message);
+    }
+
+    function sendOff() {
+      message = new Paho.MQTT.Message('0');
+      message.destinationName = 'testtopic';
+      client.send(message);
+    }
+  </script>
+</html>
