@@ -14,21 +14,23 @@
     <div class="flexi">
       <h1>C5/14 Watering System</h1>
       <h5>Scheduling</h5>
-      <ul>
-        <li>10.00</li>
-        <li>15.00</li>
+      <ul id="sched-list">
       </ul>
-      <button class="button-primary"><i class="fa fa-plus"></i> Add schedule</button>
+      <div>
+        <input id="sched-hr" style="width:60px" type="number" value="0"></input> : 
+        <input id="sched-min" style="width:60px" type="number" value="20"></input>
+        <button onclick="addSchedule()" class="button-primary"><i class="fa fa-plus"></i></button>
+      </div>
       <h5 style="margin-top:15px">Watering Time</h5>
       <div>
-        <input style="width:40px" type="text" value="0"></input> Minutes
-        <input style="width:40px" type="text" value="20"></input> Seconds
-        <button class="button-primary"><i class="fa fa-check"></i></button>
+        <input id="mins-id" style="width:60px" type="number" value="0"></input> Mins
+        <input id="secs-id" style="width:60px" type="number" value="20"></input> Secs
+        <button onclick="editWateringLength()" class="button-primary"><i class="fa fa-check"></i></button>
       </div>
       <h5 style="margin-top:15px">Manual Control</h5>
       <div>
-        <button class="button-primary" onclick="sendOn()">ON</button>
-        <button class="button" onclick="sendOff()">OFF</button>
+        <button class="button-primary" onclick="manualControl(1)">ON</button>
+        <button class="button" onclick="manualControl(0)">OFF</button>
       </div>
     </div>
   </body>
@@ -38,6 +40,7 @@
     const hostname = 'broker.hivemq.com';
     const port = '8000';
     const clientId = 'jsws-id01';
+    let schedIds = [];
 
     client = new Paho.MQTT.Client(hostname, Number(port), clientId);
 
@@ -47,6 +50,125 @@
     client.connect({
       onSuccess: onConnect,
     });
+
+    // function to get schedule
+    function getSchedule() {
+      console.log('Getting schedule...');
+      const xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+        if(this.readyState == 4 && this.status == 200) {
+          const data = JSON.parse(xhttp.responseText);
+          console.log(data);
+
+          let schedString = '';
+
+          schedIds = [];
+          for(sched of data) {
+            let hour = sched.hour;
+            if(hour < 10) {
+              hour = `0${hour}`;
+            }
+            let minute = sched.minute;
+            if(minute < 10) {
+              minute = `0${minute}`;
+            }
+
+            schedString += `<li>${hour}.${minute}`; 
+            schedString += ` <button onclick="deleteSchedule(${sched.id})" style="background-color:#ef5350;color:white"><i class="fa fa-trash"></i></button></li>`;
+            schedIds.push(sched.id);
+          }
+          document.getElementById('sched-list').innerHTML = schedString;
+        }
+      }
+      xhttp.open('GET', window.location.href + 'sched', true);
+      xhttp.send();
+    }
+
+    // function to add schedule
+    function addSchedule() {
+      const hour = document.getElementById('sched-hr').value;
+      const min = document.getElementById('sched-min').value;
+
+      const data = {
+        hour: hour,
+        min: min,
+      };
+      console.log(data);  
+
+      let alerted = false;
+      const xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+        console.log(xhttp.status);
+      }
+      xhttp.open('POST', window.location.href + 'sched', true);
+      xhttp.setRequestHeader('Content-Type', 'application/json');
+      xhttp.send(JSON.stringify(data));
+  
+      // re-fetch schedule
+      getSchedule();
+    }
+
+    // function to delete schedule
+    function deleteSchedule(schedId) {
+      const data = {
+        id: schedId,
+      };
+      console.log(data);  
+
+      let alerted = false;
+      const xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+        console.log(xhttp.status);
+      }
+      xhttp.open('DELETE', window.location.href + 'sched', true);
+      xhttp.setRequestHeader('Content-Type', 'application/json');
+      xhttp.send(JSON.stringify(data));
+  
+      // re-fetch schedule
+      getSchedule();
+    }
+
+    // function to get watering length data
+    function getWateringLength() {
+      console.log('Getting watering length data...');
+      console.log('Getting schedule...');
+      const xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+        if(this.readyState == 4 && this.status == 200) {
+          const data = JSON.parse(xhttp.responseText);
+          console.log(data);
+
+          document.getElementById('mins-id').value = data.minute;
+          document.getElementById('secs-id').value = data.second;
+        }
+      }
+      xhttp.open('GET', window.location.href + 'length', true);
+      xhttp.send();
+    }
+
+    // function to edit watering length data
+    function editWateringLength() {
+      const mins = document.getElementById('mins-id').value;
+      const secs = document.getElementById('secs-id').value;
+
+      const data = {
+        'mins' : mins,
+        'secs' : secs,
+      };
+      console.log(data);
+
+      let alerted = false;
+      const xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+        console.log(xhttp.status);
+      }
+      xhttp.open('PUT', window.location.href + 'length', true);
+      xhttp.setRequestHeader('Content-Type', 'application/json');
+      xhttp.send(JSON.stringify(data));
+    }
+
+    getSchedule();
+    getWateringLength();
 
     function onConnect() {
       console.log('onConnect');
@@ -66,10 +188,18 @@
       console.log('onMessageArrived: ' + message.payloadString);
     }
 
-    function sendOn() {
-      message = new Paho.MQTT.Message('1');
-      message.destinationName = 'testtopic';
-      client.send(message);
+    function manualControl(status) {
+      const data = {
+        control: status,
+      };
+      
+      const xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+        console.log(xhttp.status);
+      }
+      xhttp.open('POST', window.location.href + 'control', true);
+      xhttp.setRequestHeader('Content-Type', 'application/json');
+      xhttp.send(JSON.stringify(data));
     }
 
     function sendOff() {
