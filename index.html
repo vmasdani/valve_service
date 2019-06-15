@@ -4,6 +4,7 @@
     <title>C5/14 Watering System</title>
     <meta name="viewport" content="width=device-width intial-scale=1">
     <meta charset="utf-8">
+    <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="css/skeleton.css">
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/custom.css">
@@ -31,6 +32,10 @@
       <div>
         <button class="button-primary" onclick="manualControl(1)">ON</button>
         <button class="button" onclick="manualControl(0)">OFF</button>
+      </div>
+      <h5 style="margin-top:15px">Power Off</h5>
+      <div>
+        <button class="button" onclick="powerOff()" style="background-color:#ef5350;color:white"><i class="fa fa-power-off"></i></button>
       </div>
     </div>
   </body>
@@ -188,5 +193,14 @@
       xhttp.send(JSON.stringify(data));
     }
 
+    function powerOff() {
+      const xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+        console.log(xhttp.status);
+      }
+      xhttp.open('POST', window.location.href + 'poweroff', true);
+      xhttp.setRequestHeader('Content-Type', 'application/json');
+      xhttp.send();
+    }
   </script>
 </html>

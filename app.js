@@ -128,6 +128,15 @@ app.post('/control', (req, res) => {
   res.sendStatus(201);
 });
 
+// poweroff route
+app.post('/poweroff', (req, res) => {
+  client.publish('control', '1');
+  res.sendStatus(201);
+});
+
+
+
+
 // Start express app  
 app.listen(port, () => {
   console.log(`App listening on port ${port}`);
