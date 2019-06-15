@@ -130,7 +130,7 @@ app.post('/control', (req, res) => {
 
 // poweroff route
 app.post('/poweroff', (req, res) => {
-  client.publish('control', '1');
+  client.publish('poweroff', '1');
   res.sendStatus(201);
 });
 
