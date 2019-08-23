@@ -55,9 +55,9 @@ setInterval(() => {
     let matchDetect = false;
     let scheduleArray = [];
     for(row of rows) {
-      const dbHour = row.hour;
-      const dbMin = row.minute;
-      scheduleArray.push(`DB: ${dbHour}.${dbMin}, current: ${hour}.${mins}`);
+      const dbHour = parseInt(row.hour);
+      const dbMin = parseInt(row.minute);
+      scheduleArray.push(`DB: ${dbHour}.${dbMin} (${typeof dbHour}).(${typeof dbMin}), current: ${hour}.${mins} (${typeof hour}).(${typeof mins})`);
       matchDetect = (dbHour === hour && dbMin === mins) ? true : false;
     }
     sameTime ? console.log('Still the same time.') : console.log('Time changed!');
