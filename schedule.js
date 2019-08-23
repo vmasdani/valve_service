@@ -28,7 +28,8 @@ let sameTime = false;
 setInterval(() => {
   const offset = 7; // for UTC+0700
   const date = new Date(new Date().getTime()); 
-  console.log(`[${date}] Checking database entry...`);
+  // console.log(`[${date}] Checking database entry...`);
+  console.log(`Database polling...`);
 
   const hour = date.getHours();
   const mins = date.getMinutes();
@@ -45,42 +46,36 @@ setInterval(() => {
   lastDetectedTime.hour = hour;
   lastDetectedTime.mins = mins;
 
-  const query = 'select * from sched';
-  sched.all(query, [], (err, rows) => {
+  // const query = 'select * from sched';
+  const query = `select * from sched where hour=? and minute=?`;
+  sched.get(query, [hour, mins], (err, row) => {
     if(err) {
       throw err;
     }
+    console.log('Result: ', row);
 
-    // check if any of the hour matches
-    let matchDetect = false;
-    let scheduleArray = [];
-    for(row of rows) {
-      const dbHour = parseInt(row.hour);
-      const dbMin = parseInt(row.minute);
-      scheduleArray.push(`DB: ${dbHour}.${dbMin} (${typeof dbHour}).(${typeof dbMin}), current: ${hour}.${mins} (${typeof hour}).(${typeof mins})`);
-      matchDetect = (dbHour === hour && dbMin === mins) ? true : false;
+    if(row) {
+      console.log('Schedule detected!');
+      
+      if(!sameTime) {
+        const query = 'select * from length where id=?';
+        sched.get(query, [1], (err, row) => {
+          const minute = row.minute;
+          const second = row.second;
+          const totalSecs = minute * 60 + second;
+
+          console.log(`Watering for ${minute} minute(s) and ${second} second(s), totaling ${totalSecs} second(s).`);
+
+          const data = {
+            length: totalSecs,
+          };
+          
+          client.publish('schedule', JSON.stringify(data));
+        }); //sched.get table=length
+      }
     }
-    sameTime ? console.log('Still the same time.') : console.log('Time changed!');
-    console.log(scheduleArray);
-    matchDetect ? console.log('Match!') : console.log('No match!');
-
-    // if detected and not in the same time anymore, send MQTT data.
-    if(matchDetect && !sameTime) {
-      // query the watering time from Database
-      const query = 'select * from length where id=1';
-      sched.get(query, [], (err, row) => {
-        const minute = row.minute;
-        const second = row.second;
-        const totalSecs = minute * 60 + second;
-
-        console.log(`Watering for ${minute} minute(s) and ${second} second(s), totaling ${totalSecs} second(s).`);
-
-        const data = {
-          length: totalSecs,
-        };
-        
-        client.publish('schedule', JSON.stringify(data));
-      });
+    else {
+      console.log('Schedule not detected!');
     }
-  });
-}, 20000);
+  }); // sched.get table=sched
+}, 10000);
