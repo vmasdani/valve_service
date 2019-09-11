@@ -29,10 +29,11 @@ setInterval(() => {
   const offset = 7; // for UTC+0700
   const date = new Date(new Date().getTime()); 
   // console.log(`[${date}] Checking database entry...`);
-  console.log(`Database polling...`);
-
+  
   const hour = date.getHours();
   const mins = date.getMinutes();
+
+  console.log(`[${hour}:${mins}] Database polling...`);
 
   // Check last detected time 
   if(lastDetectedTime.hour != hour || lastDetectedTime.mins != mins) {
@@ -78,4 +79,4 @@ setInterval(() => {
       console.log('Schedule not detected!');
     }
   }); // sched.get table=sched
-}, 10000);
+}, 20000);
