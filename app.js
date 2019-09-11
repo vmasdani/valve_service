@@ -174,6 +174,7 @@ setInterval(() => {
 
   // Restart at midnight
   if(Number(hour) === 0 && Number(mins) === 0) {
+    console.log('Reboot detected!')
     client.publish('reboot', '1'); 
   }
 
